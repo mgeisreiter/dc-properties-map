@@ -20,7 +20,8 @@ githublink = 'https://github.com/austinlasseter/dc-properties-map'
 mapbox_access_token = open("assets/mytoken.mapbox_token").read()
 df = pd.read_csv('resources/DC_Properties.csv', index_col='Unnamed: 0')
 df = df.sample(500)
-varlist=['BATHRM', 'HF_BATHRM', 'ROOMS', 'BEDRM', 'STORIES',  'PRICE']
+varlist=['BATHRM', 'HF_BATHRM', 'ROOMS', 'BEDRM', 'PRICE', 'STORIES']
+firstVar = 'PRICE'
 
 ########### Initiate the app
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -29,35 +30,32 @@ server = app.server
 app.title=tabtitle
 
 ########## Figure
-fig = go.Figure(go.Scattermapbox(
+def display_var(value):
+    fig = go.Figure(go.Scattermapbox(
         lat=df['LATITUDE'],
         lon=df['LONGITUDE'],
         mode='markers',
         marker=go.scattermapbox.Marker(
             size=9,
             colorscale='Reds',
-            color=df['PRICE']
+            color=df[value]
         ),
-        text=df['ASSESSMENT_SUBNBHD']
+        text=df['ASSESSMENT_SUBNBHD']))
 
-    ))
-
-fig.update_layout(
-    autosize=True,
-    hovermode='closest',
-    mapbox=go.layout.Mapbox(
-        accesstoken=mapbox_access_token,
-        bearing=0,
-        center=go.layout.mapbox.Center(
-            lat=38.92,
-            lon=-77.07
+    fig.update_layout(
+        autosize=True,
+        hovermode='closest',
+        mapbox=go.layout.Mapbox(
+            accesstoken=mapbox_access_token,
+            bearing=0,
+            center=go.layout.mapbox.Center(
+                lat=38.92,
+                lon=-77.07),
+            pitch=0,
+            zoom=10
         ),
-        pitch=0,
-        zoom=10
-    ),
-)
-
-
+    )
+    return fig
 
 ########### Layout
 
@@ -76,7 +74,7 @@ app.layout = html.Div(children=[
         ], className='three columns'),
         # right side
         html.Div([
-            dcc.Graph(id='dc-map', figure=fig)
+            dcc.Graph(id='dc-map', figure=display_var(firstVar))
         ], className='nine columns'),
     ], className='twelve columns'),
 
@@ -89,6 +87,10 @@ app.layout = html.Div(children=[
 )
 
 ############ Callbacks
+@app.callback(dash.dependencies.Output('dc-map', 'figure'),
+    [dash.dependencies.Input('stats-drop', 'value')])
+def updateFigWith(value):
+    return display_var(value)
 
 
 
